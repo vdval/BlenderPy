@@ -1,0 +1,43 @@
+import os
+import time
+import bpy
+
+# Dossier où enregistrer tes captures
+dossier_sortie = "/run/media/valeavoxl/DataStudio/Timelapses/"
+if not os.path.exists(dossier_sortie):
+  os.makedirs(dossier_sortie)
+
+compteur_images = 0
+max_images = 40  # Nombre d'images avant l'arrêt automatique
+
+
+def prendre_capture_viewport():
+  global compteur_images
+
+  # Si on a atteint le max, on stoppe le timer en renvoyant None
+  if compteur_images >= max_images:
+    print(f"Time-lapse terminé : {max_images} images enregistrées.")
+    return None
+
+  # Nom du fichier avec un numéro sur 2 chiffres
+  nom_fichier = f"image_{compteur_images + 1:02d}.png"
+  chemin_complet = os.path.join(dossier_sortie, nom_fichier)
+
+  # Capture l'écran du viewport actif
+  bpy.ops.screen.screenshot(filepath=chemin_complet)
+
+  print(
+      f"Capture {compteur_images + 1} / {max_images} enregistrée :"
+      f" {nom_fichier}"
+  )
+
+  compteur_images += 1
+  return 2.0  # Relance la fonction dans 2 secondes
+
+
+# Lancement propre du timer (évite les doublons si on le relance)
+if bpy.app.timers.is_registered(prendre_capture_viewport):
+  bpy.app.timers.unregister(prendre_capture_viewport)
+
+bpy.app.timers.register(prendre_capture_viewport)
+print("Time-lapse lancé !")
