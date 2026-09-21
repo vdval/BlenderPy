@@ -1,0 +1,31 @@
+import bpy
+
+def apply_default_grey_material():
+    mat_name = "M_Clay"
+
+    # Récupération ou création du matériau
+    mat = bpy.data.materials.get(mat_name)
+    if not mat:
+        mat = bpy.data.materials.new(name=mat_name)
+        mat.use_nodes = True
+
+    # Configuration des paramètres du Principled BSDF
+    nodes = mat.node_tree.nodes
+    bsdf = nodes.get("Principled BSDF")
+
+    if bsdf:
+        # Couleur gris clair neutre (valeurs RVB)
+        bsdf.inputs["Base Color"].default_value = (0.7, 0.7, 0.7, 1.0)
+        bsdf.inputs["Metallic"].default_value = 0.0
+        bsdf.inputs["Roughness"].default_value = 0.5
+
+    # Attribution aux objets sélectionnés de type MESH
+    selected_objects = [obj for obj in bpy.context.selected_objects if obj.type == 'MESH']
+
+    for obj in selected_objects:
+        if not obj.data.materials:
+            obj.data.materials.append(mat)
+        else:
+            obj.data.materials[0] = mat
+
+apply_default_grey_material()
