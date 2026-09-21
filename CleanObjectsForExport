@@ -1,0 +1,45 @@
+import bpy
+
+def clean_objects_for_export():
+    # Sélection des objets de type MESH
+    selected_meshes = [obj for obj in bpy.context.selected_objects if obj.type == 'MESH']
+    
+    if not selected_meshes:
+        print("Aucun maillage sélectionné.")
+        return
+
+    # S'assurer d'être en Mode Objet
+    if bpy.context.mode != 'OBJECT':
+        bpy.ops.object.mode_set(mode='OBJECT')
+
+    for obj in selected_meshes:
+        # Définir l'objet comme actif pour les opérateurs
+        bpy.context.view_layer.objects.active = obj
+        
+        # 1. Appliquer toutes les transformations (Location, Rotation, Scale)
+        bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+        
+        # 2. Purger les normales personnalisées corrompues
+        if hasattr(obj.data, "clear_custom_normals"):
+            obj.data.clear_custom_normals()
+        else:
+            try:
+                bpy.ops.object.customdata_custom_split_normals_clear()
+            except Exception:
+                pass
+        
+        # Recalculer les normales vers l'extérieur
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.mesh.select_all(action='SELECT')
+        bpy.ops.mesh.normals_make_consistent(inside=False)
+        bpy.ops.object.mode_set(mode='OBJECT')
+
+        # 3. Supprimer les slots de matériaux vides
+        for i in reversed(range(len(obj.material_slots))):
+            if obj.material_slots[i].material is None:
+                obj.active_material_index = i
+                bpy.ops.object.material_slot_remove()
+
+    print("Nettoyage terminé pour l'exportation.")
+
+clean_objects_for_export()
